@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.22)
 
 if(NOT TARGET GoodNet::sdk)
     project(goodnet_strategy_float_send_rtt
-        VERSION   0.1.0
+        VERSION   1.0.0
         LANGUAGES CXX)
     find_package(GoodNet REQUIRED)
     include(CTest)
