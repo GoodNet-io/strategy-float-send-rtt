@@ -44,8 +44,15 @@ gn_result_t FloatSendRtt::pick_conn(
     const gn_path_sample_t* candidates,
     std::size_t count,
     gn_conn_id_t* out_chosen) noexcept {
-    if (!peer_pk || !candidates || count == 0 || !out_chosen) {
+    if (!peer_pk || !candidates || !out_chosen) {
         return GN_ERR_NULL_ARG;
+    }
+    /// Empty candidate set is "no winner exists" rather than
+    /// "missing argument" — fold it into `GN_ERR_NOT_FOUND` so the
+    /// kernel can surface a "no usable conn" diagnostic instead of
+    /// the misleading null-arg complaint the previous shape returned.
+    if (count == 0) {
+        return GN_ERR_NOT_FOUND;
     }
 
     /// Snapshot every candidate's tracked state under a single shared

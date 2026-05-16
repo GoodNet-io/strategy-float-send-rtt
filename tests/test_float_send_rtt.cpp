@@ -59,7 +59,10 @@ TEST(FloatSendRtt, NullArgsRejected) {
 
     EXPECT_EQ(s.pick_conn(nullptr, &cand, 1, &chosen), GN_ERR_NULL_ARG);
     EXPECT_EQ(s.pick_conn(pk.data(), nullptr, 1, &chosen), GN_ERR_NULL_ARG);
-    EXPECT_EQ(s.pick_conn(pk.data(), &cand, 0, &chosen),   GN_ERR_NULL_ARG);
+    /// Empty candidate set returns `GN_ERR_NOT_FOUND` — "no winner
+    /// can be picked" is a distinct surface from "caller passed
+    /// nullptr where required". See `pick_conn` body.
+    EXPECT_EQ(s.pick_conn(pk.data(), &cand, 0, &chosen),   GN_ERR_NOT_FOUND);
     EXPECT_EQ(s.pick_conn(pk.data(), &cand, 1, nullptr),   GN_ERR_NULL_ARG);
 
     EXPECT_EQ(s.on_path_event(nullptr, GN_PATH_EVENT_RTT_UPDATE, &cand),
