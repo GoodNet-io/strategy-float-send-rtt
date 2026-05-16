@@ -171,17 +171,23 @@ gn_result_t FloatSendRtt::on_path_event(
             break;
         }
         case GN_PATH_EVENT_CONN_DOWN: {
-            if (!sample) return GN_OK;
-            {
+            /// `sample` carries the specific conn id when the kernel
+            /// knows which one went down. Without it the strategy
+            /// cannot prune `paths_` (keyed by conn) but it MUST
+            /// still invalidate the winner cache for this peer —
+            /// otherwise a subsequent `pick_conn` returns the cached
+            /// winner that just dropped, and the failover sequence
+            /// stalls. The earlier `return GN_OK` on a null sample
+            /// left the cache populated and made the strategy
+            /// transparently sticky to a dead conn.
+            const std::uint64_t pk_key = pk_to_key(peer_pk);
+            if (sample) {
                 std::unique_lock lk(paths_mu_);
                 paths_.erase(sample->conn);
             }
-            /// Drop the per-peer winner if it pointed at this conn —
-            /// next `pick_conn` re-evaluates from scratch.
-            const std::uint64_t pk_key = pk_to_key(peer_pk);
             std::unique_lock wl(winners_mu_);
             if (auto it = winners_.find(pk_key); it != winners_.end()) {
-                if (it->second.conn == sample->conn) {
+                if (sample == nullptr || it->second.conn == sample->conn) {
                     winners_.erase(it);
                 }
             }
