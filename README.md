@@ -26,9 +26,13 @@ nix run .#test -- tsan                       # ThreadSanitizer
 ## Load
 
 The kernel's `PluginManager` opens the `.so` from a manifest entry
-that pins its SHA-256 digest. One strategy is active per node;
-loading a second `gn.strategy.*` plugin (e.g. `cost-aware`)
-triggers `GN_ERR_LIMIT_REACHED` from `register_extension`.
+that pins its SHA-256 digest. The kernel's extension registry admits
+multiple `gn.strategy.*` plugins simultaneously and walks the chain
+in registration order on each `send_to` — the first strategy that
+returns a real conn wins. Operators that want a single picker per
+node simply register one plugin; composition with a fallback (e.g.
+`rtt-optimal` + `cost-aware`) is also supported without further
+gating.
 
 ## Decision logic
 
@@ -61,12 +65,12 @@ Mirrors `docs/architecture/strategies.ru.md` "smart routing":
 
 ## Status
 
-- v0.1.0: shipped 2026-05-12 as part of Слайс 9-RTT.
+- v0.1.0: initial release 2026-05-12.
 - v1.0.0 target: stable picker behaviour + operator config key for
   `switch_threshold` + loss-aware routing (currently the
   `GN_PATH_EVENT_LOSS_DETECTED` slot is ignored; v1.1 will weigh
   loss alongside RTT).
-- Kernel-side outbound dispatch hook lands in Слайс 9-KERNEL.
-  Until then this plugin compiles and unit-tests in isolation; the
-  picker logic is exercised through direct `pick_conn` calls in
-  `tests/test_float_send_rtt.cpp`.
+- Kernel-side outbound dispatch is live: the kernel's `send_to`
+  thunk consults registered `gn.strategy.*` plugins through
+  `pick_conn` on every multi-conn destination. Direct `pick_conn`
+  call coverage lives in `tests/test_float_send_rtt.cpp`.
