@@ -70,10 +70,13 @@ gn_result_t FloatSendRtt::pick_conn(
             const auto& c = candidates[i];
             std::uint64_t rtt = c.rtt_us;
             std::uint32_t caps = c.caps;
-            /// Prefer our smoothed EWMA over the raw sample the
-            /// kernel passed in (the kernel snapshot is point-in-time;
-            /// the EWMA absorbs jitter). Fall back to the kernel
-            /// sample if we have no history for the conn.
+            /// `gn_path_sample_t::rtt_us` carries the kernel's
+            /// smoothed EWMA (per `sdk/extensions/strategy.h`). We
+            /// keep an additional per-conn EWMA over those values
+            /// so the picker has the most recent winner-stable
+            /// signal even when `pick_conn` runs faster than
+            /// `on_path_event` snapshots arrive. Fall back to the
+            /// kernel value if we have no history for the conn yet.
             if (auto it = paths_.find(c.conn); it != paths_.end()) {
                 if (it->second.rtt_ewma_us != 0) rtt  = it->second.rtt_ewma_us;
                 if (it->second.caps != 0)         caps = it->second.caps;
@@ -204,7 +207,13 @@ gn_result_t FloatSendRtt::on_path_event(
             if (!sample || sample->rtt_us == 0) return GN_OK;
             std::unique_lock lk(paths_mu_);
             auto& st = paths_[sample->conn];
-            /// EWMA per RFC 6298 §2 — α = 1/8, β = 7/8. Cheap shift/
+            /// `sample->rtt_us` is already the kernel-smoothed
+            /// EWMA(α = 1/8) per `host_api->notify_rtt_sample`.
+            /// We compose a second EWMA over those values so a
+            /// burst of late `pick_conn` calls between event
+            /// snapshots still reflects the trend; the effective
+            /// time constant is heavier, which the picker's
+            /// hysteresis threshold accounts for. Cheap shift/
             /// add keeps the on_path_event hot path under a
             /// microsecond.
             st.rtt_ewma_us = (st.rtt_ewma_us == 0)
