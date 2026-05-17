@@ -2,10 +2,11 @@
 /// @file   plugins/strategies/float_send_rtt/tests/test_float_send_rtt.cpp
 /// @brief  Unit coverage for FloatSendRtt's pick_conn + on_path_event.
 ///
-/// The picker is exercised directly — no kernel dispatch needed. The
-/// future Слайс 9-KERNEL adds the host_api thunk that calls this
-/// strategy in production; this test fixture pretends to be that
-/// thunk by handing the strategy synthetic `gn_path_sample_t` arrays.
+/// The picker is exercised directly — no kernel dispatch needed.
+/// The kernel-side host_api thunk that calls this strategy in
+/// production lives in `core/kernel/host_api/messaging.cpp::send_to`;
+/// this fixture pretends to be that thunk by handing the strategy
+/// synthetic `gn_path_sample_t` arrays.
 
 #include <gtest/gtest.h>
 

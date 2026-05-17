@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /// @file   plugins/strategies/float_send_rtt/float_send_rtt.hpp
-/// @brief  `gn.strategy.rtt-optimal` — first reference strategy plugin
-///         consuming the SDK foundation from Слайс 9-SDK.
+/// @brief  `gn.strategy.rtt-optimal` — reference strategy plugin
+///         that ranks conns by smoothed RTT.
 ///
 /// Decision logic, mirroring `docs/architecture/strategies.ru.md` §3
 /// "smart routing":
