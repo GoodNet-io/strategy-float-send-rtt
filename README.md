@@ -68,8 +68,8 @@ Mirrors `docs/architecture/strategies.ru.md` "smart routing":
 - v0.1.0: initial release 2026-05-12.
 - v1.0.0 target: stable picker behaviour + operator config key for
   `switch_threshold` + loss-aware routing (currently the
-  `GN_PATH_EVENT_LOSS_DETECTED` slot is ignored; v1.1 will weigh
-  loss alongside RTT).
+  `GN_PATH_EVENT_LOSS_DETECTED` slot is ignored; weighing loss
+  alongside RTT is planned).
 - Kernel-side outbound dispatch is live: the kernel's `send_to`
   thunk consults registered `gn.strategy.*` plugins through
   `pick_conn` on every multi-conn destination. Direct `pick_conn`
